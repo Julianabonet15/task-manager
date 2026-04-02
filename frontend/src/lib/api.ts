@@ -19,7 +19,9 @@ export interface Task {
 export interface Stats {
   notStarted: number;
   inProgress: number;
-  totalEstimate: number;
+  inReview: number;
+  done: number;
+  blocked: number;
 }
 
 export interface CreateTaskDto {

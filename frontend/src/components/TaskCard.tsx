@@ -1,51 +1,60 @@
-import Link from 'next/link';
 import { Task } from '@/lib/api';
 
-const statusColors: Record<string, string> = {
-  not_started: 'bg-gray-100 text-gray-600',
-  in_progress: 'bg-blue-100 text-blue-600',
+const statusStyles: Record<string, string> = {
+  not_started: 'bg-gray-100 text-gray-500',
+  in_progress: 'bg-blue-100 text-blue-500',
   in_review: 'bg-yellow-100 text-yellow-600',
   done: 'bg-green-100 text-green-600',
-  blocked: 'bg-red-100 text-red-600',
+  blocked: 'bg-red-100 text-red-400',
 };
 
-const priorityColors: Record<string, string> = {
-  low: 'bg-gray-100 text-gray-500',
-  medium: 'bg-yellow-100 text-yellow-600',
-  high: 'bg-orange-100 text-orange-600',
-  critical: 'bg-red-100 text-red-600',
+const priorityStyles: Record<string, string> = {
+  low: 'bg-gray-100 text-gray-400',
+  medium: 'bg-orange-100 text-orange-400',
+  high: 'bg-pink-100 text-pink-500',
+  critical: 'bg-red-100 text-red-400',
 };
 
-export default function TaskCard({ task, onDelete }: { task: Task; onDelete: (id: string) => void }) {
+interface TaskCardProps {
+  task: Task;
+  onDelete: (id: string) => void;
+  onClick: (task: Task) => void;
+  selected: boolean;
+}
+
+export default function TaskCard({ task, onDelete, onClick, selected }: TaskCardProps) {
   return (
-    <div className="bg-white border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-2">
-        <Link href={`/tasks/${task.id}`} className="text-base font-semibold text-gray-800 hover:text-blue-600 flex-1">
-          {task.title}
-        </Link>
+    <tr
+      onClick={() => onClick(task)}
+      className={`border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50 ${selected ? 'bg-gray-50' : 'bg-white'}`}
+    >
+      <td className="px-6 py-4">
+        <p className="text-sm font-medium text-gray-800">{task.title}</p>
+        {task.description && (
+          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{task.description}</p>
+        )}
+      </td>
+      <td className="px-4 py-4">
+        <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusStyles[task.status]}`}>
+          {task.status.replace(/_/g, ' ')}
+        </span>
+      </td>
+      <td className="px-4 py-4">
+        <span className={`text-xs px-2 py-1 rounded-full font-medium ${priorityStyles[task.priority]}`}>
+          {task.priority}
+        </span>
+      </td>
+      <td className="px-4 py-4 text-xs text-gray-400">
+        {task.estimate !== null ? `${task.estimate} pts` : '—'}
+      </td>
+      <td className="px-4 py-4 text-right">
         <button
-          onClick={() => onDelete(task.id)}
-          className="text-gray-300 hover:text-red-400 text-sm shrink-0"
+          onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+          className="text-gray-300 hover:text-red-400 transition-colors text-sm"
         >
           ✕
         </button>
-      </div>
-      {task.description && (
-        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{task.description}</p>
-      )}
-      <div className="flex flex-wrap gap-2 mt-3">
-        <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[task.status]}`}>
-          {task.status.replace('_', ' ')}
-        </span>
-        <span className={`text-xs px-2 py-1 rounded-full font-medium ${priorityColors[task.priority]}`}>
-          {task.priority}
-        </span>
-        {task.estimate !== null && (
-          <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-600 font-medium">
-            {task.estimate} pts
-          </span>
-        )}
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 }

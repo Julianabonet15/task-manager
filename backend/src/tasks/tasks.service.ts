@@ -34,21 +34,16 @@ export class TasksService {
   }
 
   getStats() {
-const all = this.tasksRepository.findAll_flat() as any[];
+  const all = this.tasksRepository.findAll_flat() as any[];
 
-    const notStarted = all
-      .filter(t => t.status === 'not_started')
-      .reduce((sum, t) => sum + (t.estimate ?? 0), 0);
-
-    const inProgress = all
-      .filter(t => t.status === 'in_progress')
-      .reduce((sum, t) => sum + (t.estimate ?? 0), 0);
-
-    const totalEstimate = all
-      .reduce((sum, t) => sum + (t.estimate ?? 0), 0);
-
-    return { notStarted, inProgress, totalEstimate };
-  }
+  return {
+    notStarted: all.filter(t => t.status === 'not_started').length,
+    inProgress: all.filter(t => t.status === 'in_progress').length,
+    inReview: all.filter(t => t.status === 'in_review').length,
+    done: all.filter(t => t.status === 'done').length,
+    blocked: all.filter(t => t.status === 'blocked').length,
+  };
+}
 
   private buildTree(id: string): any {
     const task = this.tasksRepository.findById(id) as any;

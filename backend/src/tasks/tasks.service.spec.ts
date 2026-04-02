@@ -72,16 +72,20 @@ describe('TasksService', () => {
     expect(() => service.delete('id-inexistente')).toThrow(NotFoundException);
   });
 
-  it('getStats() calcula correctamente', () => {
-    mockRepository.findAll_flat.mockReturnValue([
-      { status: 'not_started', estimate: 3 },
-      { status: 'not_started', estimate: 2 },
-      { status: 'in_progress', estimate: 5 },
-      { status: 'done', estimate: 1 },
-    ]);
-    const stats = service.getStats();
-    expect(stats.notStarted).toBe(5);
-    expect(stats.inProgress).toBe(5);
-    expect(stats.totalEstimate).toBe(11);
-  });
+ it('getStats() calcula correctamente', () => {
+  mockRepository.findAll_flat.mockReturnValue([
+    { status: 'not_started', estimate: 3 },
+    { status: 'not_started', estimate: 2 },
+    { status: 'in_progress', estimate: 5 },
+    { status: 'in_review', estimate: 1 },
+    { status: 'done', estimate: 1 },
+    { status: 'blocked', estimate: 1 },
+  ]);
+  const stats = service.getStats();
+  expect(stats.notStarted).toBe(2);
+  expect(stats.inProgress).toBe(1);
+  expect(stats.inReview).toBe(1);
+  expect(stats.done).toBe(1);
+  expect(stats.blocked).toBe(1);
+});
 });

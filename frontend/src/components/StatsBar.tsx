@@ -1,23 +1,22 @@
 import { Stats } from '@/lib/api';
 
+const cards = [
+  { key: 'notStarted' as keyof Stats, label: 'Not Started', color: 'text-gray-600' },
+  { key: 'inProgress' as keyof Stats, label: 'In Progress', color: 'text-blue-500' },
+  { key: 'inReview' as keyof Stats, label: 'In Review', color: 'text-yellow-600' },
+  { key: 'done' as keyof Stats, label: 'Done', color: 'text-green-600' },
+  { key: 'blocked' as keyof Stats, label: 'Blocked', color: 'text-red-400' },
+];
+
 export default function StatsBar({ stats }: { stats: Stats }) {
   return (
-    <div className="grid grid-cols-3 gap-4 mb-8">
-      <div className="bg-gray-100 rounded-xl p-4 text-center">
-        <p className="text-sm text-gray-500">Not Started</p>
-        <p className="text-2xl font-bold text-gray-800">{stats.notStarted}</p>
-        <p className="text-xs text-gray-400">est. points</p>
-      </div>
-      <div className="bg-blue-50 rounded-xl p-4 text-center">
-        <p className="text-sm text-blue-500">In Progress</p>
-        <p className="text-2xl font-bold text-blue-700">{stats.inProgress}</p>
-        <p className="text-xs text-blue-300">est. points</p>
-      </div>
-      <div className="bg-purple-50 rounded-xl p-4 text-center">
-        <p className="text-sm text-purple-500">Total Estimate</p>
-        <p className="text-2xl font-bold text-purple-700">{stats.totalEstimate}</p>
-        <p className="text-xs text-purple-300">est. points</p>
-      </div>
+    <div className="grid grid-cols-5 gap-3 mb-6">
+      {cards.map(card => (
+        <div key={card.key} className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{card.label}</p>
+          <p className={`text-2xl font-semibold ${card.color}`}>{stats[card.key]}</p>
+        </div>
+      ))}
     </div>
   );
 }
