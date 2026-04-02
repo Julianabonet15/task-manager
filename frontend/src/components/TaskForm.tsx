@@ -1,19 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { CreateTaskDto, UpdateTaskDto, Status, Priority, Task } from '@/lib/api';
-
-type FormData = CreateTaskDto & UpdateTaskDto;
+import { Status, Priority, Task, TaskFormData } from '@/lib/api';
 
 interface TaskFormProps {
   initial?: Task;
   parentId?: string;
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: TaskFormData) => void | Promise<void>;
   onCancel: () => void;
 }
 
 export default function TaskForm({ initial, parentId, onSubmit, onCancel }: TaskFormProps) {
-  const [form, setForm] = useState<FormData>({
+  const [form, setForm] = useState<TaskFormData>({
     title: initial?.title ?? '',
     description: initial?.description ?? '',
     status: initial?.status ?? 'not_started',
@@ -56,7 +54,13 @@ export default function TaskForm({ initial, parentId, onSubmit, onCancel }: Task
   );
 }
 
-function FormFields({ form, handleChange }: { form: any; handleChange: any }) {
+function FormFields({
+  form,
+  handleChange,
+}: {
+  form: TaskFormData;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+}) {
   return (
     <div className="space-y-3">
       <input

@@ -2,7 +2,8 @@ import { Module, Global } from '@nestjs/common';
 import Database from 'better-sqlite3';
 import * as path from 'path';
 
-const db = new Database(path.join(__dirname, '../../task-manager.db'));
+const dbPath = process.env.DB_PATH || path.join(__dirname, '../../task-manager.db');
+const db = new Database(dbPath);
 
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');

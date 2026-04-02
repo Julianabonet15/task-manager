@@ -35,10 +35,19 @@ export interface CreateTaskDto {
 
 export interface UpdateTaskDto {
   title?: string;
-  description?: string;
+  description?: string | null;
   status?: Status;
   priority?: Priority;
-  estimate?: number;
+  estimate?: number | null;
+}
+
+export interface TaskFormData {
+  title: string;
+  description?: string | null;
+  status?: Status;
+  priority?: Priority;
+  estimate?: number | null;
+  parent_id?: string;
 }
 
 const api = axios.create({

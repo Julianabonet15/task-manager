@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Task, Stats, getTasks, getStats, createTask, deleteTask, updateTask, Priority, Status } from '@/lib/api';
+import { Task, Stats, TaskFormData, getTasks, getStats, createTask, deleteTask, updateTask, Priority, Status } from '@/lib/api';
 import StatsBar from '@/components/StatsBar';
 import TaskCard from '@/components/TaskCard';
 import TaskForm from '@/components/TaskForm';
@@ -54,8 +54,17 @@ export default function Home() {
 
   useEffect(() => { load(); }, []);
 
-  const handleCreate = async (data: Parameters<typeof createTask>[0]) => {
-    await createTask(data);
+  const handleCreate = async (data: TaskFormData) => {
+    const createPayload = {
+      title: data.title,
+      description: data.description ?? undefined,
+      status: data.status,
+      priority: data.priority,
+      estimate: data.estimate ?? undefined,
+      parent_id: data.parent_id,
+    };
+
+    await createTask(createPayload);
     setShowForm(false);
     load();
   };
@@ -67,16 +76,31 @@ export default function Home() {
     load();
   };
 
-  const handleUpdate = async (data: Partial<Task>) => {
+  const handleUpdate = async (data: TaskFormData) => {
     if (!selected) return;
-    await updateTask(selected.id, data);
+    const updatePayload = {
+      title: data.title,
+      description: data.description ?? null,
+      status: data.status,
+      priority: data.priority,
+      estimate: data.estimate ?? null,
+    };
+
+    await updateTask(selected.id, updatePayload);
     setEditingSelected(false);
     load();
   };
 
-  const handleAddSubtask = async (data: Parameters<typeof createTask>[0]) => {
+  const handleAddSubtask = async (data: TaskFormData) => {
     if (!selected) return;
-    await createTask({ ...data, parent_id: selected.id });
+    await createTask({
+      title: data.title,
+      description: data.description ?? undefined,
+      status: data.status,
+      priority: data.priority,
+      estimate: data.estimate ?? undefined,
+      parent_id: selected.id,
+    });
     setAddingSubtask(false);
     const { getTask } = await import('@/lib/api');
     const updated = await getTask(selected.id);

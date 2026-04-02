@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Task, getTask, updateTask, deleteTask, createTask } from '@/lib/api';
+import { Task, TaskFormData, getTask, updateTask, deleteTask, createTask } from '@/lib/api';
 import SubtaskTree from '@/components/SubtaskTree';
 import TaskForm from '@/components/TaskForm';
 
@@ -42,8 +42,14 @@ export default function TaskDetail() {
 
   useEffect(() => { load(); }, [id]);
 
-  const handleUpdate = async (data: Partial<Task>) => {
-    await updateTask(id, data);
+  const handleUpdate = async (data: TaskFormData) => {
+    await updateTask(id, {
+      title: data.title,
+      description: data.description ?? null,
+      status: data.status,
+      priority: data.priority,
+      estimate: data.estimate ?? null,
+    });
     setEditing(false);
     load();
   };
@@ -54,8 +60,15 @@ export default function TaskDetail() {
     router.push('/');
   };
 
-  const handleAddSubtask = async (data: Parameters<typeof createTask>[0]) => {
-    await createTask({ ...data, parent_id: id });
+  const handleAddSubtask = async (data: TaskFormData) => {
+    await createTask({
+      title: data.title,
+      description: data.description ?? undefined,
+      status: data.status,
+      priority: data.priority,
+      estimate: data.estimate ?? undefined,
+      parent_id: id,
+    });
     setAddingSubtask(false);
     load();
   };
@@ -142,7 +155,7 @@ export default function TaskDetail() {
             </div>
           )}
 
-          <SubtaskTree subtasks={task.subtasks ?? []} />
+          <SubtaskTree subtasks={task.subtasks ?? []} onRefresh={() => window.location.reload()} />
         </div>
       </div>
     </div>
