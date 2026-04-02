@@ -36,12 +36,14 @@ export class TasksService {
   getStats() {
   const all = this.tasksRepository.findAll_flat() as any[];
 
+  const countByStatus = (status: string) => all.filter(t => t.status === status).length;
+
   return {
-    notStarted: all.filter(t => t.status === 'not_started').length,
-    inProgress: all.filter(t => t.status === 'in_progress').length,
-    inReview: all.filter(t => t.status === 'in_review').length,
-    done: all.filter(t => t.status === 'done').length,
-    blocked: all.filter(t => t.status === 'blocked').length,
+    notStarted: countByStatus('not_started'),
+    inProgress: countByStatus('in_progress'),
+    inReview: countByStatus('in_review'),
+    done: countByStatus('done'),
+    blocked: countByStatus('blocked'),
   };
 }
 

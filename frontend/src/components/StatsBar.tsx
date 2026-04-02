@@ -10,10 +10,10 @@ const cards = [
 
 export default function StatsBar({ stats }: { stats: Stats }) {
   return (
-    <div className="grid grid-cols-5 gap-3 mb-6">
+   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
       {cards.map(card => (
         <div key={card.key} className="bg-white border border-gray-200 rounded-lg px-4 py-3">
-          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{card.label}</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1 truncate">{card.label}</p>
           <p className={`text-2xl font-semibold ${card.color}`}>{stats[card.key]}</p>
         </div>
       ))}

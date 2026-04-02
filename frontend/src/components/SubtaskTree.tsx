@@ -1,6 +1,7 @@
 'use client';
 
-import { Task } from '@/lib/api';
+import { Task, Status, updateTask, deleteTask } from '@/lib/api';
+import { useState } from 'react';
 
 const statusStyles: Record<string, string> = {
   not_started: 'bg-gray-100 text-gray-500',
@@ -10,22 +11,78 @@ const statusStyles: Record<string, string> = {
   blocked: 'bg-red-100 text-red-400',
 };
 
-function SubtaskNode({ task, depth = 0 }: { task: Task; depth?: number }) {
+const statusOptions: Status[] = ['not_started', 'in_progress', 'in_review', 'done', 'blocked'];
+
+function SubtaskNode({ task, onRefresh }: { task: Task; onRefresh: () => void }) {
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleStatusChange = async (status: Status) => {
+    setShowStatusMenu(false);
+    await updateTask(task.id, { status });
+    onRefresh();
+  };
+
+  const handleDelete = async () => {
+    await deleteTask(task.id);
+    onRefresh();
+  };
+
   return (
-    <div style={{ marginLeft: depth * 12 }}>
-      <div className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0">
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${statusStyles[task.status]}`}>
-          {task.status.replace(/_/g, ' ')}
-        </span>
-        <span className="text-sm text-gray-700 flex-1">{task.title}</span>
+    <div>
+      <div className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0 group">
+        <div className="relative inline-block">
+          <button
+            onClick={() => setShowStatusMenu(v => !v)}
+            className={`text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer hover:opacity-80 shrink-0 ${statusStyles[task.status]}`}
+          >
+            {task.status.replace(/_/g, ' ')}
+          </button>
+          {showStatusMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowStatusMenu(false)} />
+              <div className="absolute left-0 top-6 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[130px]">
+                {statusOptions.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => handleStatusChange(s)}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 ${s === task.status ? 'font-medium' : ''}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full inline-block ${statusStyles[s].split(' ')[0]}`} />
+                    {s.replace(/_/g, ' ')}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        <div className="flex-1">
+          <p className="text-sm text-gray-700">{task.title}</p>
+          {task.description && (
+            <p className="text-xs text-gray-400 mt-0.5">{task.description}</p>
+          )}
+        </div>
         {task.estimate !== null && (
           <span className="text-xs text-gray-400 shrink-0">{task.estimate} pts</span>
         )}
+        {confirmDelete ? (
+          <div className="flex items-center gap-1 shrink-0">
+            <button onClick={handleDelete} className="text-xs text-red-400 hover:text-red-600 font-medium">Delete</button>
+            <button onClick={() => setConfirmDelete(false)} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 text-sm shrink-0"
+          >
+            ✕
+          </button>
+        )}
       </div>
       {task.subtasks && task.subtasks.length > 0 && (
-        <div className="border-l border-gray-200 ml-2">
+        <div className="border-l border-gray-200 ml-3 pl-2">
           {task.subtasks.map(sub => (
-            <SubtaskNode key={sub.id} task={sub} depth={depth + 1} />
+            <SubtaskNode key={sub.id} task={sub} onRefresh={onRefresh} />
           ))}
         </div>
       )}
@@ -33,12 +90,12 @@ function SubtaskNode({ task, depth = 0 }: { task: Task; depth?: number }) {
   );
 }
 
-export default function SubtaskTree({ subtasks }: { subtasks: Task[] }) {
+export default function SubtaskTree({ subtasks, onRefresh }: { subtasks: Task[]; onRefresh: () => void }) {
   if (subtasks.length === 0) return <p className="text-xs text-gray-400">No subtasks yet.</p>;
   return (
     <div>
       {subtasks.map(task => (
-        <SubtaskNode key={task.id} task={task} />
+        <SubtaskNode key={task.id} task={task} onRefresh={onRefresh} />
       ))}
     </div>
   );

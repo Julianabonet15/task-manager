@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Task, Stats, getTasks, getStats, createTask, deleteTask, updateTask } from '@/lib/api';
+import { Task, Stats, getTasks, getStats, createTask, deleteTask, updateTask, Priority, Status } from '@/lib/api';
 import StatsBar from '@/components/StatsBar';
 import TaskCard from '@/components/TaskCard';
 import TaskForm from '@/components/TaskForm';
@@ -22,6 +22,9 @@ const priorityStyles: Record<string, string> = {
   critical: 'bg-red-100 text-red-400',
 };
 
+const statusOptions: Status[] = ['not_started', 'in_progress', 'in_review', 'done', 'blocked'];
+const priorityOptions: Priority[] = ['low', 'medium', 'high', 'critical'];
+
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [stats, setStats] = useState<Stats>({ notStarted: 0, inProgress: 0, inReview: 0, done: 0, blocked: 0 });
@@ -29,6 +32,15 @@ export default function Home() {
   const [selected, setSelected] = useState<Task | null>(null);
   const [editingSelected, setEditingSelected] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showPanelStatusMenu, setShowPanelStatusMenu] = useState(false);
+  const [showPanelPriorityMenu, setShowPanelPriorityMenu] = useState(false);
+
+  const filteredTasks = tasks
+    .filter(t => filterStatus === 'all' || t.status === filterStatus)
+    .filter(t => t.title.toLowerCase().includes(search.toLowerCase()));
 
   const load = async () => {
     const [t, s] = await Promise.all([getTasks(), getStats()]);
@@ -49,7 +61,7 @@ export default function Home() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Eliminar esta tarea?')) return;
+    if (!confirm('Delete this task?')) return;
     await deleteTask(id);
     if (selected?.id === id) setSelected(null);
     load();
@@ -66,7 +78,6 @@ export default function Home() {
     if (!selected) return;
     await createTask({ ...data, parent_id: selected.id });
     setAddingSubtask(false);
-    // reload selected with subtasks
     const { getTask } = await import('@/lib/api');
     const updated = await getTask(selected.id);
     setSelected(updated);
@@ -83,10 +94,10 @@ export default function Home() {
 
   return (
     <div className="flex h-[calc(100vh-57px)]">
-      {/* Main */}
-      <div className={`flex-1 overflow-auto p-8 transition-all duration-300 ${selected ? 'mr-[400px]' : ''}`}>
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
+      <div className={`flex-1 overflow-auto px-4 py-6 transition-all duration-300 ${selected ? 'sm:mr-[400px]' : ''}`}>
+        <div className="w-full max-w-4xl mx-auto px-2 sm:px-0">
+
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-xl font-semibold text-gray-800">Tasks</h1>
               <p className="text-xs text-gray-400 mt-0.5">{tasks.length} task{tasks.length !== 1 ? 's' : ''} total</p>
@@ -101,10 +112,50 @@ export default function Home() {
 
           <StatsBar stats={stats} />
 
-          {showForm && (
-            <div className="mb-4">
-              <TaskForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300 bg-white"
+            />
+            <div className="relative">
+              <button
+                onClick={() => setShowFilterMenu(v => !v)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 bg-white hover:bg-gray-50 transition-colors flex items-center gap-1 h-full"
+              >
+                {filterStatus === 'all' ? 'All Status' : filterStatus.replace(/_/g, ' ')}
+                <span className="text-gray-400">▾</span>
+              </button>
+              {showFilterMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowFilterMenu(false)} />
+                  <div className="absolute right-0 top-10 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[140px]">
+                    <button
+                      onClick={() => { setFilterStatus('all'); setShowFilterMenu(false); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 ${filterStatus === 'all' ? 'font-medium' : ''}`}
+                    >
+                      All Status
+                    </button>
+                    {statusOptions.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => { setFilterStatus(s); setShowFilterMenu(false); }}
+                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 ${s === filterStatus ? 'font-medium' : ''}`}
+                      >
+                        <span className={`w-2 h-2 rounded-full inline-block ${statusStyles[s].split(' ')[0]}`} />
+                        {s.replace(/_/g, ' ')}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
+          </div>
+
+          {showForm && (
+            <TaskForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
           )}
 
           {tasks.length === 0 ? (
@@ -113,24 +164,25 @@ export default function Home() {
               <p className="text-xs mt-1">Create your first task to get started</p>
             </div>
           ) : (
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <table className="w-full group">
+            <div className="bg-white border border-gray-200 rounded-lg overflow-visible">
+              <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Task</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Priority</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Estimate</th>
-                    <th className="px-4 py-3" />
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Task</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wide w-32">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wide w-28">Priority</th>
+                    <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Estimate</th>
+                    <th className="hidden sm:table-cell w-8" />
                   </tr>
                 </thead>
                 <tbody>
-                  {tasks.map(task => (
+                  {filteredTasks.map(task => (
                     <TaskCard
                       key={task.id}
                       task={task}
                       onDelete={handleDelete}
                       onClick={handleSelectTask}
+                      onRefresh={load}
                       selected={selected?.id === task.id}
                     />
                   ))}
@@ -141,9 +193,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Side Panel */}
       {selected && (
-        <div className="fixed right-0 top-[57px] w-[400px] h-[calc(100vh-57px)] bg-white border-l border-gray-200 overflow-auto shadow-lg">
+        <div className="fixed inset-0 sm:inset-auto sm:right-0 sm:top-[57px] sm:w-[400px] sm:h-[calc(100vh-57px)] bg-white border-l border-gray-200 overflow-auto shadow-lg z-30">
           <div className="p-6">
             <div className="flex items-center justify-between mb-5">
               <span className="text-xs text-gray-400 uppercase tracking-wide font-medium">Task Details</span>
@@ -160,12 +211,58 @@ export default function Home() {
                 )}
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusStyles[selected.status]}`}>
-                    {selected.status.replace(/_/g, ' ')}
-                  </span>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${priorityStyles[selected.priority]}`}>
-                    {selected.priority}
-                  </span>
+                  <div className="relative inline-block">
+                    <button
+                      onClick={() => setShowPanelStatusMenu(v => !v)}
+                      className={`text-xs px-2 py-1 rounded-full font-medium cursor-pointer hover:opacity-80 ${statusStyles[selected.status]}`}
+                    >
+                      {selected.status.replace(/_/g, ' ')}
+                    </button>
+                    {showPanelStatusMenu && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowPanelStatusMenu(false)} />
+                        <div className="absolute left-0 top-7 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[130px]">
+                          {statusOptions.map(s => (
+                            <button
+                              key={s}
+                              onClick={async () => { setShowPanelStatusMenu(false); await updateTask(selected.id, { status: s }); load(); }}
+                              className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 ${s === selected.status ? 'font-medium' : ''}`}
+                            >
+                              <span className={`w-2 h-2 rounded-full inline-block ${statusStyles[s].split(' ')[0]}`} />
+                              {s.replace(/_/g, ' ')}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="relative inline-block">
+                    <button
+                      onClick={() => setShowPanelPriorityMenu(v => !v)}
+                      className={`text-xs px-2 py-1 rounded-full font-medium cursor-pointer hover:opacity-80 ${priorityStyles[selected.priority]}`}
+                    >
+                      {selected.priority}
+                    </button>
+                    {showPanelPriorityMenu && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowPanelPriorityMenu(false)} />
+                        <div className="absolute left-0 top-7 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[120px]">
+                          {priorityOptions.map(p => (
+                            <button
+                              key={p}
+                              onClick={async () => { setShowPanelPriorityMenu(false); await updateTask(selected.id, { priority: p }); load(); }}
+                              className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 ${p === selected.priority ? 'font-medium' : ''}`}
+                            >
+                              <span className={`w-2 h-2 rounded-full inline-block ${priorityStyles[p].split(' ')[0]}`} />
+                              {p}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
                   {selected.estimate !== null && (
                     <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500 font-medium">
                       {selected.estimate} pts
@@ -207,7 +304,12 @@ export default function Home() {
                       <TaskForm onSubmit={handleAddSubtask} onCancel={() => setAddingSubtask(false)} />
                     </div>
                   )}
-                  <SubtaskTree subtasks={selected.subtasks ?? []} />
+                  <SubtaskTree subtasks={selected.subtasks ?? []} onRefresh={async () => {
+                    const { getTask } = await import('@/lib/api');
+                    const updated = await getTask(selected.id);
+                    setSelected(updated);
+                    load();
+                  }} />
                 </div>
               </>
             )}

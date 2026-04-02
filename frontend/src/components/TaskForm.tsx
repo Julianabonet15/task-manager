@@ -30,14 +30,14 @@ export default function TaskForm({ initial, parentId, onSubmit, onCancel }: Task
     }));
   };
 
-  const isModal = !initial;
+  const isModal = true;
 
   if (isModal) {
     return (
       <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">New Task</h2>
+            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{initial ? 'Edit Task' : 'New Task'}</h2>
             <button onClick={onCancel} className="text-gray-300 hover:text-gray-500 text-lg">✕</button>
           </div>
           <FormFields form={form} handleChange={handleChange} />
@@ -49,7 +49,7 @@ export default function TaskForm({ initial, parentId, onSubmit, onCancel }: Task
               onClick={() => onSubmit(form)}
               className="px-4 py-2 text-xs bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
             >
-              Create
+              {initial ? 'Save' : 'Create'}
             </button>
           </div>
         </div>
