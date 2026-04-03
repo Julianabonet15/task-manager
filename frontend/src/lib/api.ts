@@ -51,7 +51,7 @@ export interface TaskFormData {
 }
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
 });
 
 export const getTasks = () => api.get<Task[]>('/api/tasks').then(r => r.data);

@@ -28,7 +28,7 @@ npm install
 npm run start:dev
 ```
 
-The API will be available at `http://localhost:3000`
+The API will be available at `http://localhost:3001`
 
 ### 3. Frontend
 
@@ -39,7 +39,15 @@ npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:3001`
+The app will be available at `http://localhost:3000`
+
+### Docker (optional)
+```bash
+docker compose up --build
+```
+
+- Backend: `http://localhost:3001`
+- Frontend: `http://localhost:3002`
 
 ## Running Tests
 ```bash
